@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Aplikasi Simulasi BBM - Tema Pertamina</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body class="bg-slate-50 min-h-screen font-sans">
+    <div id="app">
+      <nav
+        class="bg-blue-900 border-b-4 border-red-600 px-6 py-4 flex justify-between items-center shadow-md text-white"
+      >
+        <div class="flex items-center gap-2">
+          <span class="text-xl font-black tracking-wider text-white"
+            >PERTAMINA</span
+          >
+          <span
+            class="text-xs bg-emerald-500 text-white px-2 py-0.5 rounded font-bold"
+            >Simulator</span
+          >
+        </div>
+        <div class="flex gap-6 text-sm font-bold">
+          <button
+            @click="currentTab = 'simulasi'"
+            :class="currentTab === 'simulasi' ? 'text-emerald-400 border-b-2 border-emerald-400' : 'text-slate-300 hover:text-white'"
+            class="pb-1 transition"
+          >
+            Simulasi Pengisian
+          </button>
+          <button
+            @click="currentTab = 'admin'"
+            :class="currentTab === 'admin' ? 'text-emerald-400 border-b-2 border-emerald-400' : 'text-slate-300 hover:text-white'"
+            class="pb-1 transition"
+          >
+            Panel Admin
+          </button>
+        </div>
+      </nav>
+
+      <div class="max-w-4xl mx-auto p-6">
+        <div
+          v-if="currentTab === 'simulasi'"
+          class="grid grid-cols-1 md:grid-cols-2 gap-6"
+        >
+          <div
+            class="bg-white p-6 rounded-2xl shadow-md border-t-4 border-blue-900"
+          >
+            <h1 class="text-xl font-bold mb-6 text-blue-900">
+              ⛽ Kalkulator Dispenser BBM
+            </h1>
+
+            <div class="mb-4">
+              <label class="block font-semibold text-slate-700 mb-1 text-sm"
+                >Pilih Merek Motor:</label
+              >
+              <select
+                v-model="selectedMotor"
+                class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-900"
+              >
+                <option v-for="m in listMotor" :value="m">
+                  {{ m.merek }} ({{ m.kapasitas }}L)
+                </option>
+              </select>
+            </div>
+
+            <div class="mb-4">
+              <label class="block font-semibold text-slate-700 mb-1 text-sm"
+                >Pilih Jenis BBM:</label
+              >
+              <select
+                v-model="selectedBbm"
+                class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-900"
+              >
+                <option v-for="b in listBbm" :value="b">
+                  {{ b.nama_bbm }} (Rp{{ b.harga }}/L)
+                </option>
+              </select>
+            </div>
+
+            <div class="mb-4">
+              <label class="block font-semibold text-slate-700 mb-1 text-sm"
+                >Metode Nozzle:</label
+              >
+              <div class="flex gap-6 mt-2 text-sm">
+                <label
+                  class="flex items-center gap-2 cursor-pointer font-medium text-slate-600"
+                  ><input
+                    type="radio"
+                    v-model="tipeInput"
+                    value="uang"
+                    class="text-blue-900"
+                  />
+                  Berdasarkan Rupiah (Rp)</label
+                >
+                <label
+                  class="flex items-center gap-2 cursor-pointer font-medium text-slate-600"
+                  ><input
+                    type="radio"
+                    v-model="tipeInput"
+                    value="liter"
+                    class="text-blue-900"
+                  />
+                  Berdasarkan Liter</label
+                >
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <label class="block font-semibold text-slate-700 mb-1 text-sm"
+                >Masukkan Jumlah Pengisian:</label
+              >
+              <input
+                type="number"
+                v-model="inputUser"
+                @input="hitungSimulasi"
+                class="w-full p-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-900"
+                :placeholder="tipeInput === 'uang' ? 'Contoh: 30000' : 'Contoh: 2'"
+              />
+            </div>
+          </div>
+
+          <div
+            class="bg-white p-6 rounded-2xl shadow-md border-t-4 border-red-600 flex flex-col items-center justify-center"
+          >
+            <h2
+              class="text-md font-bold text-slate-700 mb-4 tracking-wide uppercase"
+            >
+              Nozzle Status Indicator
+            </h2>
+
+            <div
+              class="w-44 h-64 border-4 border-slate-800 rounded-b-3xl relative bg-slate-100 overflow-hidden mb-6 flex flex-col justify-end shadow-inner"
+            >
+              <div
+                class="w-full transition-all duration-500 ease-out"
+                :class="{'bg-red-600': hasil.persentaseTangki <= 20, 'bg-amber-400': hasil.persentaseTangki > 20 && hasil.persentaseTangki <= 50, 'bg-emerald-500': hasil.persentaseTangki > 50}"
+                :style="{ height: Math.min(hasil.persentaseTangki, 100) + '%' }"
+              ></div>
+              <div
+                class="absolute inset-0 flex items-center justify-center font-black text-3xl text-slate-900"
+              >
+                {{ hasil.persentaseTangki || 0 }}%
+              </div>
+            </div>
+
+            <div
+              class="w-full space-y-2.5 text-sm bg-slate-50 p-4 rounded-xl border border-slate-200"
+            >
+              <div class="flex justify-between border-b pb-1">
+                <span class="text-slate-600">Volume BBM:</span
+                ><span class="font-bold text-blue-900"
+                  >{{ hasil.literDidapat || 0 }} Liter</span
+                >
+              </div>
+              <div class="flex justify-between border-b pb-1">
+                <span class="text-slate-600">Total Harga:</span
+                ><span class="font-bold text-blue-900"
+                  >Rp{{ (hasil.totalBiaya || 0).toLocaleString('id-ID') }}</span
+                >
+              </div>
+              <div class="flex justify-between items-center pt-1">
+                <span class="text-slate-600">Kondisi BBM:</span>
+                <span
+                  v-if="!hasil.persentaseTangki"
+                  class="font-bold text-slate-400"
+                  >Menunggu Input</span
+                >
+                <span
+                  v-else-if="hasil.status !== 'Aman'"
+                  class="font-black text-red-600 animate-pulse bg-red-50 px-2 py-0.5 rounded border border-red-200"
+                  >{{ hasil.status }}</span
+                >
+                <span
+                  v-else-if="hasil.persentaseTangki <= 20"
+                  class="font-black text-red-600 bg-red-50 px-2 py-0.5 rounded border border-red-200"
+                  >⚠️ bensin sekarat segera isi</span
+                >
+                <span
+                  v-else-if="hasil.persentaseTangki <= 50"
+                  class="font-black text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-200"
+                  >⚡ masih aman</span
+                >
+                <span
+                  v-else
+                  class="font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200"
+                  >✅ aman</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="currentTab === 'admin'">
+          <div
+            v-if="!tokenAdmin"
+            class="max-w-sm mx-auto bg-white p-6 rounded-2xl shadow-md border-t-4 border-red-600 mt-12"
+          >
+            <h2 class="text-lg font-bold text-blue-900 mb-4 text-center">
+              🔒 Sistem Keamanan Admin
+            </h2>
+            <div class="space-y-3">
+              <input
+                type="text"
+                v-model="loginUsername"
+                placeholder="Username Admin"
+                class="w-full p-2.5 border border-slate-300 rounded-lg text-sm"
+              />
+              <input
+                type="password"
+                v-model="loginPassword"
+                placeholder="Password Admin"
+                class="w-full p-2.5 border border-slate-300 rounded-lg text-sm"
+              />
+              <button
+                @click="prosesLogin"
+                class="w-full bg-blue-900 hover:bg-slate-800 text-white font-bold py-2.5 rounded-lg text-sm transition"
+              >
+                LOG IN SYSTEM
+              </button>
+            </div>
+          </div>
+
+          <div v-else class="space-y-6">
+            <div
+              class="p-4 rounded-xl shadow-sm border flex justify-between items-center bg-blue-900 text-white border-l-4 border-red-500"
+            >
+              <span class="font-medium text-sm"
+                >Mode Otoritas Karyawan / Admin Aktif.</span
+              >
+              <button
+                @click="logout"
+                class="bg-red-600 hover:bg-red-700 px-3 py-1 rounded-md text-xs font-bold transition"
+              >
+                Log Out
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div
+                class="bg-white p-5 rounded-2xl border shadow-sm border-t-4 border-blue-900"
+              >
+                <h2 class="text-sm font-bold text-blue-900 mb-3">
+                  ➕ Daftarkan Varian Kendaraan Baru
+                </h2>
+                <div class="grid grid-cols-3 gap-2 mb-2">
+                  <input
+                    type="text"
+                    v-model="newMotorNama"
+                    placeholder="Merek Motor"
+                    class="col-span-2 p-2 border border-slate-300 rounded-lg text-xs"
+                  />
+                  <input
+                    type="number"
+                    step="0.1"
+                    v-model="newMotorKapasitas"
+                    placeholder="Tangki (L)"
+                    class="p-2 border border-slate-300 rounded-lg text-xs"
+                  />
+                </div>
+                <button
+                  @click="tambahMotor"
+                  class="w-full bg-blue-900 hover:bg-slate-800 text-white font-bold py-2 rounded-lg text-xs"
+                >
+                  Simpan Kendaraan
+                </button>
+              </div>
+
+              <div
+                class="bg-white p-5 rounded-2xl border shadow-sm border-t-4 border-emerald-600"
+              >
+                <h2 class="text-sm font-bold text-emerald-700 mb-3">
+                  ➕ Rilis Produk BBM Baru
+                </h2>
+                <div class="grid grid-cols-3 gap-2 mb-2">
+                  <input
+                    type="text"
+                    v-model="newBbmNama"
+                    placeholder="Nama Bahan Bakar"
+                    class="col-span-2 p-2 border border-slate-300 rounded-lg text-xs"
+                  />
+                  <input
+                    type="number"
+                    v-model="newBbmHarga"
+                    placeholder="Harga/L"
+                    class="p-2 border border-slate-300 rounded-lg text-xs"
+                  />
+                </div>
+                <button
+                  @click="tambahBbm"
+                  class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-lg text-xs"
+                >
+                  Simpan BBM
+                </button>
+              </div>
+            </div>
+
+            <div
+              class="bg-white p-5 rounded-2xl border shadow-sm border-t-4 border-red-600 max-w-md mx-auto"
+            >
+              <h2 class="text-sm font-bold text-red-700 mb-3">
+                🔄 Penyesuaian Tarif & Identitas BBM
+              </h2>
+              <select
+                v-model="bbmToUpdate"
+                @change="isiFormUpdate"
+                class="w-full p-2 border border-slate-300 rounded-lg text-xs mb-2 bg-slate-50"
+              >
+                <option :value="null">-- Pilih BBM yang Akan Diubah --</option>
+                <option v-for="b in listBbm" :key="b.id" :value="b">
+                  {{ b.nama_bbm }} (Rp{{ b.harga }})
+                </option>
+              </select>
+              <div v-if="bbmToUpdate" class="grid grid-cols-3 gap-2 mb-2">
+                <input
+                  type="text"
+                  v-model="updateBbmNama"
+                  class="col-span-2 p-2 border border-slate-300 rounded-lg text-xs"
+                />
+                <input
+                  type="number"
+                  v-model="updateBbmHarga"
+                  class="p-2 border border-slate-300 rounded-lg text-xs"
+                />
+              </div>
+              <button
+                @click="updateDataBbm"
+                class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg text-xs"
+              >
+                Perbarui Data BBM
+              </button>
+            </div>
+
+            <div
+              class="bg-white p-5 rounded-2xl border shadow-sm border-t-4 border-blue-900 max-w-md mx-auto mt-6"
+            >
+              <h2 class="text-sm font-bold text-blue-900 mb-3">
+                🔄 Penyesuaian Spesifikasi Kendaraan
+              </h2>
+              <select
+                v-model="motorToUpdate"
+                @change="isiFormUpdateMotor"
+                class="w-full p-2 border border-slate-300 rounded-lg text-xs mb-2 bg-slate-50"
+              >
+                <option :value="null">
+                  -- Pilih Motor yang Akan Diubah --
+                </option>
+                <option v-for="m in listMotor" :key="m.id" :value="m">
+                  {{ m.merek }} ({{ m.kapasitas }}L)
+                </option>
+              </select>
+              <div v-if="motorToUpdate" class="grid grid-cols-3 gap-2 mb-2">
+                <input
+                  type="text"
+                  v-model="updateMotorNama"
+                  class="col-span-2 p-2 border border-slate-300 rounded-lg text-xs"
+                />
+                <input
+                  type="number"
+                  step="0.1"
+                  v-model="updateMotorKapasitas"
+                  class="p-2 border border-slate-300 rounded-lg text-xs"
+                />
+              </div>
+              <button
+                @click="updateDataMotor"
+                class="w-full bg-blue-900 hover:bg-slate-800 text-white font-bold py-2 rounded-lg text-xs"
+              >
+                Perbarui Data Motor
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
