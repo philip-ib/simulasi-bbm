@@ -67,7 +67,12 @@ initDb();
 // 2. HUBUNGKAN KE PETA JALAN API
 app.use("/api", apiRoutes);
 
-// 3. JALANKAN SERVER
-app.listen(PORT, () =>
-  console.log(`Server Backend bersih berjalan di http://localhost:${PORT}`),
-);
+// 3. JALANKAN SERVER (Hanya jalan jika di lokal komputer)
+if (process.env.NODE_ENV !== "production") {
+  app.listen(PORT, () =>
+    console.log(`Server Backend berjalan di http://localhost:${PORT}`),
+  );
+}
+
+// WAJIB TAMBAHKAN INI UNTUK VERCEL:
+export default app;
