@@ -4,15 +4,16 @@ const { createApp } = Vue;
 // Jika di internet Vercel, gunakan alamat relatif.
 const API_URL =
   window.location.hostname === "localhost" ||
-  window.location.hostname === "127.0.0.1"
-    ? "http://localhost:5000/api"
+  window.location.hostname === "127.0.0.1" ||
+  window.location.protocol === "file:"
+    ? `http://${window.location.hostname || "localhost"}:5000/api`
     : window.location.origin + "/api";
 
 createApp({
   data() {
     return {
       currentTab: "simulasi",
-      tokenAdmin: localStorage.getItem("token_admin") || null,
+      isLoggedIn: localStorage.getItem("isLoggedIn") === "true",
       loginUsername: "",
       loginPassword: "",
       listMotor: [],
@@ -38,6 +39,14 @@ createApp({
     this.loadDataAwal();
   },
   methods: {
+    async handleProtectedResponse(res) {
+      if (res.status === 401 || res.status === 403) {
+        alert("Sesi Anda telah habis atau tidak valid. Silakan login kembali.");
+        this.logout();
+        return null;
+      }
+      return res;
+    },
     async loadDataAwal() {
       try {
         const res = await fetch(`${API_URL}/data-awal`);
@@ -69,6 +78,7 @@ createApp({
         const res = await fetch(`${API_URL}/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          credentials: "include",
           body: JSON.stringify({
             username: this.loginUsername,
             password: this.loginPassword,
@@ -77,17 +87,22 @@ createApp({
         const data = await res.json();
         if (res.status !== 200) return alert(data.error);
 
-        this.tokenAdmin = data.token;
-        localStorage.setItem("token_admin", data.token);
+        this.isLoggedIn = true;
+        localStorage.setItem("isLoggedIn", "true");
         this.loginUsername = "";
         this.loginPassword = "";
       } catch (e) {
         alert("Gagal terhubung ke server backend!");
       }
     },
-    logout() {
-      this.tokenAdmin = null;
-      localStorage.removeItem("token_admin");
+    async logout() {
+      try {
+        await fetch(`${API_URL}/logout`, { method: "POST", credentials: "include" });
+      } catch (e) {
+        console.error("Logout gagal:", e);
+      }
+      this.isLoggedIn = false;
+      localStorage.removeItem("isLoggedIn");
     },
     isiFormUpdate() {
       if (this.bbmToUpdate) {
@@ -104,15 +119,14 @@ createApp({
     async tambahMotor() {
       const res = await fetch(`${API_URL}/motor`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: this.tokenAdmin,
-        },
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           merek: this.newMotorNama,
           kapasitas: parseFloat(this.newMotorKapasitas),
         }),
       });
+      if (!(await this.handleProtectedResponse(res))) return;
       const data = await res.json();
       if (res.status !== 200) return alert(data.error);
       alert("Sukses menambah motor!");
@@ -123,15 +137,14 @@ createApp({
     async tambahBbm() {
       const res = await fetch(`${API_URL}/bensin`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: this.tokenAdmin,
-        },
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           nama_bbm: this.newBbmNama,
           harga: parseInt(this.newBbmHarga),
         }),
       });
+      if (!(await this.handleProtectedResponse(res))) return;
       const data = await res.json();
       if (res.status !== 200) return alert(data.error);
       alert("Sukses menambah BBM baru!");
@@ -142,15 +155,14 @@ createApp({
     async updateDataBbm() {
       const res = await fetch(`${API_URL}/bensin/${this.bbmToUpdate.id}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: this.tokenAdmin,
-        },
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           nama_bbm: this.updateBbmNama,
           harga: parseInt(this.updateBbmHarga),
         }),
       });
+      if (!(await this.handleProtectedResponse(res))) return;
       const data = await res.json();
       if (res.status !== 200) return alert(data.error);
       alert("Sukses mengubah data BBM!");
@@ -160,15 +172,14 @@ createApp({
     async updateDataMotor() {
       const res = await fetch(`${API_URL}/motor/${this.motorToUpdate.id}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: this.tokenAdmin,
-        },
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           merek: this.updateMotorNama,
           kapasitas: parseFloat(this.updateMotorKapasitas),
         }),
       });
+      if (!(await this.handleProtectedResponse(res))) return;
       const data = await res.json();
       if (res.status !== 200) return alert(data.error);
       alert("Sukses memperbarui data motor!");

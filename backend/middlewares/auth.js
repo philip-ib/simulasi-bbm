@@ -4,11 +4,11 @@ import "dotenv/config";
 const SECRET_KEY = process.env.SECRET_KEY;
 
 export const verifyToken = (req, res, next) => {
-  const token = req.headers["authorization"];
+  const token = req.cookies?.token;
   if (!token) {
     return res
-      .status(403)
-      .json({ error: "Akses ditolak! Anda harus login sebagai Admin." });
+      .status(401)
+      .json({ error: "Akses ditolak! Sesi telah berakhir atau Anda belum login." });
   }
 
   jwt.verify(token, SECRET_KEY, (err, decoded) => {
