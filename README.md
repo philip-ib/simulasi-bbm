@@ -1,161 +1,92 @@
-# Aplikasi Simulasi BBM (Tema Pertamina)
+# ⛽ Aplikasi Simulasi BBM - Pertamina
 
-Aplikasi Simulasi BBM adalah sebuah aplikasi berbasis web yang berfungsi sebagai kalkulator pengisian bahan bakar minyak (BBM) bergaya dispenser Pertamina. Aplikasi ini memungkinkan pengguna untuk mensimulasikan pengisian BBM berdasarkan jumlah uang (Rupiah) atau volume (Liter) dengan mempertimbangkan kapasitas maksimal tangki dari berbagai jenis motor. Selain itu, aplikasi ini dilengkapi dengan Panel Admin terproteksi untuk mengelola jenis bahan bakar dan tipe kendaraan.
+Aplikasi simulasi pengisian BBM dengan panel admin untuk mengelola data kendaraan dan harga BBM.
 
----
+## 🚀 Deploy ke Vercel (Langkah demi Langkah)
 
-## 🛠 Teknologi Stack
+### Prasyarat
 
-- **Frontend:**
-  - **HTML5, CSS3, Vanilla JavaScript**
-  - **TailwindCSS** (melalui CDN untuk styling cepat dan responsif)
-- **Backend:**
-  - **Node.js** & **Express.js** (Server-side API)
-- **Database:**
-  - **PostgreSQL**
-- **Testing:**
-  - **Jest** & **Supertest**
+1. **Akun Vercel** - Daftar di https://vercel.com (login pake GitHub)
+2. **Akun Neon** (PostgreSQL gratis) - Daftar di https://neon.tech
+3. **GitHub** - Repo sudah terhubung
 
-### Library / Package yang Digunakan (Backend)
+### Langkah 1: Setup Database PostgreSQL (Neon - GRATIS)
 
-- `express`: Framework web server.
-- `pg`: Client PostgreSQL untuk Node.js.
-- `cors`: Middleware untuk menangani Cross-Origin Resource Sharing.
-- `jsonwebtoken`: Untuk membuat dan memvalidasi JSON Web Tokens (JWT).
-- `bcrypt`: Untuk melakukan _hashing_ password admin.
-- `cookie-parser`: Membaca token otentikasi dari _HttpOnly Cookies_.
-- `dotenv`: Memuat _environment variables_ dari file `.env`.
-- `serverless-http`: Wrapper agar aplikasi Express siap di-deploy ke _serverless functions_ (seperti Vercel).
+1. Buka https://neon.tech → Sign Up (Google/GitHub)
+2. Buat project baru → pilih region terdekat (misal Singapore)
+3. Copy **Connection String** yang muncul (mulai dengan `postgresql://...`)
+4. Simpan connection string ini, akan dipakai nanti
 
----
+### Langkah 2: Push Code ke GitHub
 
-## 📂 Arsitektur & Struktur Direktori
-
-Aplikasi ini mengadopsi arsitektur pemisahan antara sisi Klien (Frontend) dan sisi Server (Backend). Backend dibangun menggunakan pola **MVC (Model-View-Controller)** yang dimodifikasi, di mana antarmuka (View) dipisah sepenuhnya di folder `frontend`.
-
-```text
-simulasi_bbm/
-├── frontend/                 # Sisi Klien (Antarmuka Pengguna)
-│   ├── index.html            # Struktur kerangka antarmuka (UI)
-│   ├── script.js             # Logika JavaScript, state management, & API call
-│   └── style.css             # Styling kustom tambahan
-│
-├── backend/                  # Sisi Server (API)
-│   ├── index.js              # Entry point, setup Express, CORS, Cookie, & koneksi DB
-│   ├── package.json          # Daftar dependensi & script Node.js
-│   ├── controllers/          # Logika pemrosesan request & interaksi database
-│   │   ├── authController.js # Menangani proses Login & Logout admin
-│   │   └── bbmController.js  # Menangani kalkulasi, serta CRUD bensin & motor
-│   ├── middlewares/          # Fungsi penengah sebelum mencapai controller
-│   │   └── auth.js           # Memverifikasi keabsahan JWT dari HttpOnly Cookie
-│   ├── routes/               # Peta jalan/jalur endpoint API
-│   │   └── api.js            # Mendaftarkan semua endpoint & menghubungkan ke controller
-│   └── tests/                # Kumpulan file pengujian (Unit Tests)
-│       ├── authController.test.js
-│       ├── bbmController.test.js
-│       └── protectedRoutes.test.js
+```bash
+git add .
+git commit -m "Fix konfigurasi untuk Vercel deploy"
+git push
 ```
 
----
+### Langkah 3: Deploy ke Vercel
 
-## 🗄 Skema Database (PostgreSQL)
+1. Buka https://vercel.com → **Add New Project**
+2. Import repository GitHub Anda
+3. **Settings penting**:
+   - **Framework Preset**: `Other`
+   - **Root Directory**: `./` (biarkan default)
+   - **Build Command**: biarkan kosong
+   - **Output Directory**: biarkan kosong
 
-Terdapat tiga tabel utama yang diinisialisasi secara otomatis saat server dijalankan pertama kali:
+4. **Environment Variables** (WAJIB diisi):
 
-1. **Tabel `users`** (Untuk otentikasi admin)
-   - `id` (SERIAL PRIMARY KEY)
-   - `username` (TEXT UNIQUE NOT NULL)
-   - `password` (TEXT NOT NULL) - _Disimpan dalam format hash bcrypt_
-
-2. **Tabel `bensin`**
-   - `id` (SERIAL PRIMARY KEY)
-   - `nama_bbm` (TEXT)
-   - `harga` (INTEGER)
-
-3. **Tabel `motor`**
-   - `id` (SERIAL PRIMARY KEY)
-   - `merek` (TEXT)
-   - `kapasitas` (REAL)
-
----
-
-## 📡 Dokumentasi API
-
-Seluruh rute (_endpoint_) API diawali dengan `/api`.
-
-### API Publik (Tanpa Otentikasi)
-
-| Method | Endpoint         | Deskripsi                                                                                              |
-| :----- | :--------------- | :----------------------------------------------------------------------------------------------------- |
-| `GET`  | `/api/data-awal` | Mengambil seluruh daftar bensin dan motor.                                                             |
-| `POST` | `/api/hitung`    | Mengirim data input (_uang/liter_, kapasitas tangki, harga BBM) dan menerima hasil kalkulasi simulasi. |
-| `POST` | `/api/login`     | Menerima `username` dan `password`. Jika sukses, mengembalikan `HttpOnly Cookie` berisi token JWT.     |
-| `POST` | `/api/logout`    | Membersihkan _cookie_ token otentikasi pengguna.                                                       |
-
-### API Terproteksi Admin (Membutuhkan HttpOnly Cookie)
-
-_Semua request di bawah ini wajib menyertakan cookie otentikasi (credentials: "include")._
-
-| Method | Endpoint          | Deskripsi                                         |
-| :----- | :---------------- | :------------------------------------------------ |
-| `POST` | `/api/motor`      | Menambahkan jenis motor baru (Merek & Kapasitas). |
-| `PUT`  | `/api/motor/:id`  | Mengubah data motor berdasarkan ID.               |
-| `POST` | `/api/bensin`     | Menambahkan jenis bensin baru (Nama BBM & Harga). |
-| `PUT`  | `/api/bensin/:id` | Mengubah data bensin berdasarkan ID.              |
-
----
-
-## 🚀 Cara Setup & Menjalankan Proyek
-
-### 1. Setup Backend
-
-1. Buka terminal dan masuk ke folder `backend`:
-   ```bash
-   cd backend
    ```
-2. Instal semua dependensi:
-   ```bash
-   npm install
-   ```
-3. Buat file `.env` di dalam folder `backend` dan isi dengan konfigurasi berikut:
-   ```env
-   PORT=5000
-   DATABASE_URL=postgres://user:password@localhost:5432/namadatabase
-   SECRET_KEY=rahasia_jwt_anda_yang_sangat_panjang_dan_aman
+   DATABASE_URL=postgresql://user:password@ep-xxx.neon.tech/dbname?sslmode=require
+   SECRET_KEY=buat_string_acak_panjang_untuk_jwt
    ADMIN_USERNAME=admin
    ADMIN_PASSWORD=123456
    ```
-   _(Catatan: Ganti nilai `DATABASE_URL` dengan kredensial PostgreSQL Anda. `ADMIN_USERNAME` dan `ADMIN_PASSWORD` akan digunakan sebagai data awal pembuatan akun admin jika tabel `users` masih kosong)._
-4. Jalankan server backend:
-   ```bash
-   npm start
-   ```
-   Server akan berjalan di `http://localhost:5000` dan otomatis melakukan inisialisasi tabel database jika belum ada.
 
-### 2. Setup Frontend (Vanilla JS + HTML)
+5. Klik **Deploy** ⚡
 
-Aplikasi frontend berupa file statis murni sehingga tidak perlu instalasi `npm`. Anda bisa menjalankannya dengan dua cara:
+### Langkah 4: Selesai! 🎉
 
-- **Cara Mudah:** Klik kanan pada file `frontend/index.html` dan pilih **Open with Live Server** (jika menggunakan VSCode).
-- **Cara Terminal:** Atau, Anda bisa menjalankan _static server_:
-  ```bash
-  cd frontend
-  npx serve -l 8000
-  ```
-  Buka browser Anda ke `http://localhost:8000`.
+Aplikasi Anda akan live di `https://simulasi-bbm-pertamina.vercel.app`
 
----
+### Troubleshooting
 
-## 🧪 Cara Melakukan Testing (Unit Test)
+**Q: Masih "Gagal terhubung ke server backend"?**
+A: Pastikan Environment Variables sudah diisi dengan benar di Vercel Dashboard:
 
-Aplikasi ini menggunakan Jest dan Supertest untuk menguji API backend. Skrip pengujian otomatis berjalan di lingkungan ES Modules (`--experimental-vm-modules`).
+- Buka project di Vercel → Settings → Environment Variables
+- Tambahkan `DATABASE_URL` dan `SECRET_KEY`
 
-1. Pastikan Anda berada di direktori `backend`:
-   ```bash
-   cd backend
-   ```
-2. Jalankan perintah _test_:
-   ```bash
-   npm test
-   ```
-3. Anda akan melihat log rincian dari 11 _test cases_ yang menguji Controllers, Authentication, dan Protected Routes. Pengujian akan memanipulasi (_mocking_) koneksi database sehingga aman untuk dieksekusi tanpa mengganggu data asli.
+**Q: Database error?**
+A: Pastikan Neon database Anda aktif. Cek di Neon dashboard → project Anda → pastikan statusnya "Active"
+
+**Q: Ingin deploy ulang?**
+A: Cukup push perubahan ke GitHub, Vercel akan auto-deploy. Atau di Vercel Dashboard → Deployments → trigger Redeploy.
+
+## 🏠 Development Lokal
+
+```bash
+# Install dependencies
+npm install
+
+# Buat file .env (copy dari .env.example)
+cp .env.example backend/.env
+
+# Isi .env dengan database PostgreSQL Anda
+# Lalu jalankan:
+npm start
+```
+
+## 🆓 Alternatif Hosting Lain
+
+Jika Vercel tetap bermasalah, coba alternatif gratis ini:
+
+| Platform        | Biaya            | Kelebihan                                                    |
+| --------------- | ---------------- | ------------------------------------------------------------ |
+| **Render.com**  | Gratis           | Web service + PostgreSQL gratis, support Express.js langsung |
+| **Railway.app** | $5 credit gratis | Lebih stabil, tanpa sleep timer                              |
+| **Fly.io**      | $5 credit/bulan  | Global deployment, support PostgreSQL                        |
+| **Koyeb**       | Gratis           | Alternatif Render, mudah digunakan                           |
+
+> **Rekomendasi**: Jika Vercel terus gagal, coba **Render.com** - paling mudah untuk full-stack app dengan database.

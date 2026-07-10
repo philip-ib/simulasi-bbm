@@ -1,7 +1,8 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import "dotenv/config";
-import { pool } from "../index.js";
+import { getPool } from "../index.js";
+const pool = getPool();
 
 const SECRET_KEY = process.env.SECRET_KEY;
 
@@ -9,7 +10,9 @@ export const login = async (req, res) => {
   const { username, password } = req.body;
 
   try {
-    const result = await pool.query("SELECT * FROM users WHERE username = $1", [username]);
+    const result = await pool.query("SELECT * FROM users WHERE username = $1", [
+      username,
+    ]);
     if (result.rows.length === 0) {
       return res.status(400).json({ error: "Username atau Password salah!" });
     }
@@ -21,14 +24,18 @@ export const login = async (req, res) => {
       return res.status(400).json({ error: "Username atau Password salah!" });
     }
 
-    const token = jwt.sign({ id: user.id, username: user.username }, SECRET_KEY, { expiresIn: "1h" });
+    const token = jwt.sign(
+      { id: user.id, username: user.username },
+      SECRET_KEY,
+      { expiresIn: "1h" },
+    );
 
     // Set cookie
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 60 * 60 * 1000 // 1 hour
+      maxAge: 60 * 60 * 1000, // 1 hour
     });
 
     return res.json({ message: "Login Berhasil!" });

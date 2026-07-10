@@ -1,4 +1,5 @@
-import { pool } from "../index.js";
+import { getPool } from "../index.js";
+const pool = getPool();
 
 // 1. Ambil data awal bensin & motor
 export const getDataAwal = async (req, res) => {
