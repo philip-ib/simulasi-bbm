@@ -9,7 +9,9 @@ import "dotenv/config";
 
 // Validasi Environment Variables — gunakan console.error saja di serverless (process.exit akan crash)
 if (!process.env.SECRET_KEY || !process.env.DATABASE_URL) {
-  console.error("FATAL ERROR: SECRET_KEY atau DATABASE_URL belum di-set di environment.");
+  console.error(
+    "FATAL ERROR: SECRET_KEY atau DATABASE_URL belum di-set di environment.",
+  );
 }
 
 const { Pool } = pg;
@@ -35,7 +37,7 @@ app.use(
       callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
-  })
+  }),
 );
 app.use(express.json());
 app.use(cookieParser());
@@ -43,13 +45,13 @@ app.use(cookieParser());
 // 1. SETUP KONEKSI POSTGRESQL
 // Bersihkan DATABASE_URL dari parameter 'channel_binding' yang tidak didukung
 const rawDbUrl = process.env.DATABASE_URL || "";
-const cleanDbUrl = rawDbUrl.replace(/[&?]channel_binding=[^&]*/g, "").replace(/\?$/, "");
+const cleanDbUrl = rawDbUrl
+  .replace(/[&?]channel_binding=[^&]*/g, "")
+  .replace(/\?$/, "");
 
 export const pool = new Pool({
   connectionString: cleanDbUrl,
-  ssl: cleanDbUrl.includes("localhost")
-    ? false
-    : { rejectUnauthorized: false },
+  ssl: cleanDbUrl.includes("localhost") ? false : { rejectUnauthorized: false },
 });
 
 // Jalankan otomatis pembuatan tabel saat server pertama kali menyala
@@ -106,7 +108,7 @@ const initDb = async () => {
       const hashedPassword = await bcrypt.hash(defaultPassword, 10);
       await pool.query(
         "INSERT INTO users (username, password) VALUES ($1, $2)",
-        [defaultUsername, hashedPassword]
+        [defaultUsername, hashedPassword],
       );
     }
 

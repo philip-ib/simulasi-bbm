@@ -7,8 +7,7 @@ Aplikasi Simulasi BBM adalah sebuah aplikasi berbasis web yang berfungsi sebagai
 ## 🛠 Teknologi Stack
 
 - **Frontend:**
-  - HTML5, CSS3, Vanilla JavaScript
-  - **Vue.js 3** (melalui CDN, menggunakan Options API)
+  - **HTML5, CSS3, Vanilla JavaScript**
   - **TailwindCSS** (melalui CDN untuk styling cepat dan responsif)
 - **Backend:**
   - **Node.js** & **Express.js** (Server-side API)
@@ -18,14 +17,15 @@ Aplikasi Simulasi BBM adalah sebuah aplikasi berbasis web yang berfungsi sebagai
   - **Jest** & **Supertest**
 
 ### Library / Package yang Digunakan (Backend)
+
 - `express`: Framework web server.
 - `pg`: Client PostgreSQL untuk Node.js.
 - `cors`: Middleware untuk menangani Cross-Origin Resource Sharing.
 - `jsonwebtoken`: Untuk membuat dan memvalidasi JSON Web Tokens (JWT).
-- `bcrypt`: Untuk melakukan *hashing* password admin.
-- `cookie-parser`: Membaca token otentikasi dari *HttpOnly Cookies*.
-- `dotenv`: Memuat *environment variables* dari file `.env`.
-- `serverless-http`: Wrapper agar aplikasi Express siap di-deploy ke *serverless functions* (seperti Vercel).
+- `bcrypt`: Untuk melakukan _hashing_ password admin.
+- `cookie-parser`: Membaca token otentikasi dari _HttpOnly Cookies_.
+- `dotenv`: Memuat _environment variables_ dari file `.env`.
+- `serverless-http`: Wrapper agar aplikasi Express siap di-deploy ke _serverless functions_ (seperti Vercel).
 
 ---
 
@@ -37,7 +37,7 @@ Aplikasi ini mengadopsi arsitektur pemisahan antara sisi Klien (Frontend) dan si
 simulasi_bbm/
 ├── frontend/                 # Sisi Klien (Antarmuka Pengguna)
 │   ├── index.html            # Struktur kerangka antarmuka (UI)
-│   ├── script.js             # Logika Vue.js, state management, & API call
+│   ├── script.js             # Logika JavaScript, state management, & API call
 │   └── style.css             # Styling kustom tambahan
 │
 ├── backend/                  # Sisi Server (API)
@@ -65,7 +65,7 @@ Terdapat tiga tabel utama yang diinisialisasi secara otomatis saat server dijala
 1. **Tabel `users`** (Untuk otentikasi admin)
    - `id` (SERIAL PRIMARY KEY)
    - `username` (TEXT UNIQUE NOT NULL)
-   - `password` (TEXT NOT NULL) - *Disimpan dalam format hash bcrypt*
+   - `password` (TEXT NOT NULL) - _Disimpan dalam format hash bcrypt_
 
 2. **Tabel `bensin`**
    - `id` (SERIAL PRIMARY KEY)
@@ -81,31 +81,34 @@ Terdapat tiga tabel utama yang diinisialisasi secara otomatis saat server dijala
 
 ## 📡 Dokumentasi API
 
-Seluruh rute (*endpoint*) API diawali dengan `/api`.
+Seluruh rute (_endpoint_) API diawali dengan `/api`.
 
 ### API Publik (Tanpa Otentikasi)
-| Method | Endpoint | Deskripsi |
-| :--- | :--- | :--- |
-| `GET` | `/api/data-awal` | Mengambil seluruh daftar bensin dan motor. |
-| `POST` | `/api/hitung` | Mengirim data input (*uang/liter*, kapasitas tangki, harga BBM) dan menerima hasil kalkulasi simulasi. |
-| `POST` | `/api/login` | Menerima `username` dan `password`. Jika sukses, mengembalikan `HttpOnly Cookie` berisi token JWT. |
-| `POST` | `/api/logout` | Membersihkan *cookie* token otentikasi pengguna. |
+
+| Method | Endpoint         | Deskripsi                                                                                              |
+| :----- | :--------------- | :----------------------------------------------------------------------------------------------------- |
+| `GET`  | `/api/data-awal` | Mengambil seluruh daftar bensin dan motor.                                                             |
+| `POST` | `/api/hitung`    | Mengirim data input (_uang/liter_, kapasitas tangki, harga BBM) dan menerima hasil kalkulasi simulasi. |
+| `POST` | `/api/login`     | Menerima `username` dan `password`. Jika sukses, mengembalikan `HttpOnly Cookie` berisi token JWT.     |
+| `POST` | `/api/logout`    | Membersihkan _cookie_ token otentikasi pengguna.                                                       |
 
 ### API Terproteksi Admin (Membutuhkan HttpOnly Cookie)
-*Semua request di bawah ini wajib menyertakan cookie otentikasi (credentials: "include").*
 
-| Method | Endpoint | Deskripsi |
-| :--- | :--- | :--- |
-| `POST` | `/api/motor` | Menambahkan jenis motor baru (Merek & Kapasitas). |
-| `PUT`  | `/api/motor/:id` | Mengubah data motor berdasarkan ID. |
-| `POST` | `/api/bensin` | Menambahkan jenis bensin baru (Nama BBM & Harga). |
-| `PUT`  | `/api/bensin/:id`| Mengubah data bensin berdasarkan ID. |
+_Semua request di bawah ini wajib menyertakan cookie otentikasi (credentials: "include")._
+
+| Method | Endpoint          | Deskripsi                                         |
+| :----- | :---------------- | :------------------------------------------------ |
+| `POST` | `/api/motor`      | Menambahkan jenis motor baru (Merek & Kapasitas). |
+| `PUT`  | `/api/motor/:id`  | Mengubah data motor berdasarkan ID.               |
+| `POST` | `/api/bensin`     | Menambahkan jenis bensin baru (Nama BBM & Harga). |
+| `PUT`  | `/api/bensin/:id` | Mengubah data bensin berdasarkan ID.              |
 
 ---
 
 ## 🚀 Cara Setup & Menjalankan Proyek
 
 ### 1. Setup Backend
+
 1. Buka terminal dan masuk ke folder `backend`:
    ```bash
    cd backend
@@ -122,22 +125,24 @@ Seluruh rute (*endpoint*) API diawali dengan `/api`.
    ADMIN_USERNAME=admin
    ADMIN_PASSWORD=123456
    ```
-   *(Catatan: Ganti nilai `DATABASE_URL` dengan kredensial PostgreSQL Anda. `ADMIN_USERNAME` dan `ADMIN_PASSWORD` akan digunakan sebagai data awal pembuatan akun admin jika tabel `users` masih kosong).*
+   _(Catatan: Ganti nilai `DATABASE_URL` dengan kredensial PostgreSQL Anda. `ADMIN_USERNAME` dan `ADMIN_PASSWORD` akan digunakan sebagai data awal pembuatan akun admin jika tabel `users` masih kosong)._
 4. Jalankan server backend:
    ```bash
    npm start
    ```
    Server akan berjalan di `http://localhost:5000` dan otomatis melakukan inisialisasi tabel database jika belum ada.
 
-### 2. Setup Frontend
+### 2. Setup Frontend (Vanilla JS + HTML)
+
 Aplikasi frontend berupa file statis murni sehingga tidak perlu instalasi `npm`. Anda bisa menjalankannya dengan dua cara:
+
 - **Cara Mudah:** Klik kanan pada file `frontend/index.html` dan pilih **Open with Live Server** (jika menggunakan VSCode).
-- **Cara Terminal:** Atau, Anda bisa menjalankan *static server*:
+- **Cara Terminal:** Atau, Anda bisa menjalankan _static server_:
   ```bash
   cd frontend
   npx serve -l 8000
   ```
-Buka browser Anda ke `http://localhost:8000`.
+  Buka browser Anda ke `http://localhost:8000`.
 
 ---
 
@@ -149,8 +154,8 @@ Aplikasi ini menggunakan Jest dan Supertest untuk menguji API backend. Skrip pen
    ```bash
    cd backend
    ```
-2. Jalankan perintah *test*:
+2. Jalankan perintah _test_:
    ```bash
    npm test
    ```
-3. Anda akan melihat log rincian dari 11 *test cases* yang menguji Controllers, Authentication, dan Protected Routes. Pengujian akan memanipulasi (*mocking*) koneksi database sehingga aman untuk dieksekusi tanpa mengganggu data asli.
+3. Anda akan melihat log rincian dari 11 _test cases_ yang menguji Controllers, Authentication, dan Protected Routes. Pengujian akan memanipulasi (_mocking_) koneksi database sehingga aman untuk dieksekusi tanpa mengganggu data asli.

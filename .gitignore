@@ -8,10 +8,6 @@ backend/.env
 # Mengabaikan file database lokal agar tidak menimpa data di server hosting
 backend/database.sqlite
 
-# Menyembunyikan alat testing dari GitHub
-cypress/
-cypress.config.js
-
 # Mengabaikan file log sampah
 npm-debug.log*
 yarn-debug.log*
