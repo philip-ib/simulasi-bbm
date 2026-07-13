@@ -1,21 +1,16 @@
 {
-  "name": "simulasi-bbm-pertamina",
-  "version": "1.0.0",
+  "name": "simulasi-bbm",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "node backend/index.js",
-    "vercel-build": "echo 'Build complete'"
+    "dev": "concurrently -n server,client -c blue,green \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "cd server && node --watch index.js",
+    "dev:client": "cd client && npx vite --port 5173",
+    "start": "cd client && npx vite build && cd ../server && node index.js",
+    "test": "cd server && node --experimental-vm-modules node_modules/.bin/jest --forceExit"
   },
-  "dependencies": {
-    "bcrypt": "^6.0.0",
-    "cookie-parser": "^1.4.7",
-    "cors": "^2.8.6",
-    "dotenv": "^17.4.2",
-    "express": "^5.2.1",
-    "express-rate-limit": "^8.5.2",
-    "jsonwebtoken": "^9.0.3",
-    "pg": "^8.22.0",
-    "serverless-http": "^3.2.0"
+  "devDependencies": {
+    "concurrently": "^9.1.0"
   }
 }
