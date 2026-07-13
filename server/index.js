@@ -1,12 +1,17 @@
-import "dotenv/config";
-import express from "express";
-import cookieParser from "cookie-parser";
+import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
-import initDb from "./db/init.js";
-import apiRoutes from "./routes/api.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Load .env dari root project dulu (prioritas), fallback ke server/
+dotenv.config({ path: path.join(__dirname, "..", ".env") });
+dotenv.config();
+
+import express from "express";
+import cookieParser from "cookie-parser";
+import initDb from "./db/init.js";
+import apiRoutes from "./routes/api.js";
 
 const app = express();
 
