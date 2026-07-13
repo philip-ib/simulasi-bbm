@@ -1,12 +1,8 @@
 // ============================================================
 // KONFIGURASI API
 // ============================================================
-const API_URL =
-  window.location.hostname === "localhost" ||
-  window.location.hostname === "127.0.0.1" ||
-  window.location.protocol === "file:"
-    ? `http://${window.location.hostname || "localhost"}:5000/api`
-    : window.location.origin + "/api";
+// Frontend & backend berbagi origin yang sama (localhost / Vercel)
+const API_URL = "/api";
 
 // ============================================================
 // STATE MANAGEMENT SEDERHANA

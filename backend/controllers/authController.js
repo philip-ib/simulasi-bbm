@@ -1,6 +1,5 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
-import "dotenv/config";
 import { getPool } from "../index.js";
 
 const SECRET_KEY = process.env.SECRET_KEY;

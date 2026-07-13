@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import pg from "pg";
@@ -5,7 +6,10 @@ import apiRoutes from "./routes/api.js";
 import cookieParser from "cookie-parser";
 import bcrypt from "bcrypt";
 import serverless from "serverless-http";
-import "dotenv/config";
+import { resolve, dirname } from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const { Pool } = pg;
 export const app = express();
@@ -53,9 +57,14 @@ function getPool() {
   if (pool) return pool;
 
   const rawDbUrl = process.env.DATABASE_URL || "";
-  const cleanDbUrl = rawDbUrl
+  let cleanDbUrl = rawDbUrl
     .replace(/[&?]channel_binding=[^&]*/g, "")
     .replace(/\?$/, "");
+
+  // Suppress pg SSL mode deprecation warning (Neon compatibility)
+  if (cleanDbUrl.includes("sslmode=require") && !cleanDbUrl.includes("uselibpqcompat")) {
+    cleanDbUrl = cleanDbUrl.replace("sslmode=require", "sslmode=require&uselibpqcompat=true");
+  }
 
   pool = new Pool({
     connectionString: cleanDbUrl,
@@ -160,6 +169,9 @@ app.use("/api", apiRoutes);
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
+
+// Sajikan frontend statis (local development)
+app.use(express.static(resolve(__dirname, "..", "frontend")));
 
 // ============================================================
 // JALANKAN SERVER (Hanya jika di lokal)
