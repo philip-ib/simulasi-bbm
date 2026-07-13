@@ -8,7 +8,7 @@
     "dev:server": "cd server && node --watch index.js",
     "dev:client": "cd client && npx vite --port 5173",
     "start": "cd client && npx vite build && cd ../server && node index.js",
-    "test": "cd server && node --experimental-vm-modules node_modules/.bin/jest --forceExit"
+    "test": "cd server && NODE_OPTIONS=\"--experimental-vm-modules\" npx jest --forceExit"
   },
   "devDependencies": {
     "concurrently": "^9.1.0"

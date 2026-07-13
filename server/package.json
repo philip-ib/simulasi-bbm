@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node index.js",
     "dev": "node --watch index.js",
-    "test": "cross-env NODE_OPTIONS=\"--experimental-vm-modules\" npx jest --forceExit"
+    "test": "npx jest --forceExit"
   },
   "jest": {
     "testEnvironment": "node",

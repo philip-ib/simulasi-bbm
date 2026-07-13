@@ -18,6 +18,15 @@ export function AppProvider({ children }) {
   const [hasil, setHasil] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [toast, setToast] = useState(null);
+
+  const showToast = useCallback((message) => {
+    setToast({ message, key: Date.now() });
+  }, []);
+
+  const clearToast = useCallback(() => {
+    setToast(null);
+  }, []);
 
   const loadData = useCallback(async () => {
     try {
@@ -69,15 +78,13 @@ export function AppProvider({ children }) {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || "Login gagal.");
-        return false;
+        return { success: false, error: data.error || "Login gagal." };
       }
       setIsLoggedIn(true);
       localStorage.setItem("isLoggedIn", "true");
-      return true;
+      return { success: true, username };
     } catch {
-      setError("Gagal terhubung ke server.");
-      return false;
+      return { success: false, error: "Gagal terhubung ke server." };
     } finally {
       setLoading(false);
     }
@@ -142,6 +149,7 @@ export function AppProvider({ children }) {
         hasil, setHasil,
         loading, setLoading,
         error, setError,
+        toast, showToast, clearToast,
         loadData, hitung, login, logout, checkAuth, apiCall,
       }}
     >

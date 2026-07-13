@@ -2,18 +2,22 @@ import { useState } from "react";
 import { useApp } from "../../context/AppContext.jsx";
 
 export default function AdminLogin() {
-  const { login, loading } = useApp();
+  const { login, loading, showToast } = useApp();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState(null);
+  const [loginError, setLoginError] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
-    const ok = await login(username, password);
-    if (!ok) return;
+    setLoginError(null);
+    const result = await login(username, password);
+    if (!result.success) {
+      setLoginError(result.error);
+      return;
+    }
     setUsername("");
     setPassword("");
+    showToast(`Selamat datang kembali, ${result.username}!`);
   };
 
   return (
@@ -23,9 +27,9 @@ export default function AdminLogin() {
           🔐 Sistem Keamanan Admin
         </h2>
 
-        {error && (
+        {loginError && (
           <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-2 mb-4">
-            {error}
+            {loginError}
           </div>
         )}
 
