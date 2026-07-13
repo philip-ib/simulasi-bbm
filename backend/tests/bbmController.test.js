@@ -1,17 +1,18 @@
 import request from 'supertest';
-import { app, pool } from '../index.js';
 import { jest } from '@jest/globals';
 
-beforeAll(() => {
-  process.env.NODE_ENV = 'test';
-});
+// Mock pg module BEFORE importing the app
+const mockQuery = jest.fn().mockResolvedValue({ rows: [] });
+jest.unstable_mockModule('pg', () => ({
+  Pool: jest.fn().mockImplementation(() => ({ query: mockQuery })),
+  default: { Pool: jest.fn().mockImplementation(() => ({ query: mockQuery })) }
+}));
+
+const { app } = await import('../index.js');
+mockQuery.mockClear(); // Reset hitungan panggilan dari initDb()
 
 afterEach(() => {
   jest.clearAllMocks();
-});
-
-afterAll(async () => {
-  await pool.end();
 });
 
 describe('BBM Controller Tests', () => {
@@ -19,12 +20,10 @@ describe('BBM Controller Tests', () => {
     it('should return initial data for bensin and motor', async () => {
       const mockBensin = [{ id: 1, nama_bbm: 'Pertamax', harga: 13200 }];
       const mockMotor = [{ id: 1, merek: 'Honda Beat', kapasitas: 4.2 }];
-      
-      const poolQuerySpy = jest.spyOn(pool, 'query').mockImplementation((queryText) => {
-        if (queryText.includes('bensin')) return Promise.resolve({ rows: mockBensin });
-        if (queryText.includes('motor')) return Promise.resolve({ rows: mockMotor });
-        return Promise.resolve({ rows: [] });
-      });
+
+      mockQuery
+        .mockResolvedValueOnce({ rows: mockBensin })
+        .mockResolvedValueOnce({ rows: mockMotor });
 
       const response = await request(app).get('/api/data-awal');
 
@@ -33,11 +32,11 @@ describe('BBM Controller Tests', () => {
       expect(response.body).toHaveProperty('motor');
       expect(response.body.bensin).toEqual(mockBensin);
       expect(response.body.motor).toEqual(mockMotor);
-      expect(poolQuerySpy).toHaveBeenCalledTimes(2);
+      expect(mockQuery).toHaveBeenCalledTimes(2);
     });
 
     it('should handle database errors gracefully', async () => {
-      jest.spyOn(pool, 'query').mockRejectedValue(new Error('Database Error'));
+      mockQuery.mockRejectedValue(new Error('Database Error'));
 
       const response = await request(app).get('/api/data-awal');
       expect(response.status).toBe(500);
@@ -74,6 +73,43 @@ describe('BBM Controller Tests', () => {
       const response = await request(app).post('/api/hitung').send(payload);
       expect(response.status).toBe(200);
       expect(response.body.status).toBe('Meluber! Tangki tidak muat.');
+    });
+
+    // --- Validation tests (P2.5) ---
+
+    it('should reject negative inputUser', async () => {
+      const res = await request(app).post('/api/hitung').send({
+        inputUser: -1000, tipeInput: 'uang', kapasitasTangki: 4.2, hargaBbm: 10000
+      });
+      expect(res.status).toBe(400);
+    });
+
+    it('should reject invalid tipeInput', async () => {
+      const res = await request(app).post('/api/hitung').send({
+        inputUser: 1000, tipeInput: 'dollar', kapasitasTangki: 4.2, hargaBbm: 10000
+      });
+      expect(res.status).toBe(400);
+    });
+
+    it('should reject kapasitasTangki nol', async () => {
+      const res = await request(app).post('/api/hitung').send({
+        inputUser: 1000, tipeInput: 'uang', kapasitasTangki: 0, hargaBbm: 10000
+      });
+      expect(res.status).toBe(400);
+    });
+
+    it('should reject hargaBbm negatif', async () => {
+      const res = await request(app).post('/api/hitung').send({
+        inputUser: 1000, tipeInput: 'uang', kapasitasTangki: 4.2, hargaBbm: -5000
+      });
+      expect(res.status).toBe(400);
+    });
+
+    it('should reject missing fields', async () => {
+      const res = await request(app).post('/api/hitung').send({
+        inputUser: 1000
+      });
+      expect(res.status).toBe(400);
     });
   });
 });

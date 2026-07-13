@@ -300,7 +300,8 @@ function isiFormUpdateBbm() {
     dom.updateBbmFields.classList.add("hidden");
     return;
   }
-  state.bbmToUpdate = JSON.parse(val);
+  state.bbmToUpdate = state.listBbm.find(b => b.id === parseInt(val)) || null;
+  if (!state.bbmToUpdate) return;
   dom.updateBbmNama.value = state.bbmToUpdate.nama_bbm;
   dom.updateBbmHarga.value = state.bbmToUpdate.harga;
   dom.updateBbmFields.classList.remove("hidden");
@@ -351,7 +352,8 @@ function isiFormUpdateMotor() {
     dom.updateMotorFields.classList.add("hidden");
     return;
   }
-  state.motorToUpdate = JSON.parse(val);
+  state.motorToUpdate = state.listMotor.find(m => m.id === parseInt(val)) || null;
+  if (!state.motorToUpdate) return;
   dom.updateMotorNama.value = state.motorToUpdate.merek;
   dom.updateMotorKapasitas.value = state.motorToUpdate.kapasitas;
   dom.updateMotorFields.classList.remove("hidden");
@@ -413,23 +415,23 @@ function renderSelectBbm() {
 }
 
 function renderUpdateSelects() {
-  // BBM update select
+  // BBM update select (gunakan ID sebagai value untuk mencegah XSS)
   dom.bbmToUpdate.innerHTML =
     `<option value="">-- Pilih BBM yang Akan Diubah --</option>` +
     state.listBbm
       .map(
         (b) =>
-          `<option value='${JSON.stringify(b)}'>${b.nama_bbm} (Rp${b.harga})</option>`,
+          `<option value="${b.id}">${b.nama_bbm} (Rp${b.harga})</option>`,
       )
       .join("");
 
-  // Motor update select
+  // Motor update select (gunakan ID sebagai value untuk mencegah XSS)
   dom.motorToUpdate.innerHTML =
     `<option value="">-- Pilih Motor yang Akan Diubah --</option>` +
     state.listMotor
       .map(
         (m) =>
-          `<option value='${JSON.stringify(m)}'>${m.merek} (${m.kapasitas}L)</option>`,
+          `<option value="${m.id}">${m.merek} (${m.kapasitas}L)</option>`,
       )
       .join("");
 }

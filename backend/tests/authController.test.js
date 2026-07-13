@@ -1,22 +1,26 @@
 import request from 'supertest';
-import { app, pool } from '../index.js';
 import { jest } from '@jest/globals';
 import bcrypt from 'bcrypt';
 
+// Mock pg BEFORE importing app
+const mockQuery = jest.fn().mockResolvedValue({ rows: [] });
+jest.unstable_mockModule('pg', () => ({
+  Pool: jest.fn().mockImplementation(() => ({ query: mockQuery })),
+  default: { Pool: jest.fn().mockImplementation(() => ({ query: mockQuery })) }
+}));
+
+const { app } = await import('../index.js');
+
 afterEach(() => {
   jest.clearAllMocks();
-});
-
-afterAll(async () => {
-  await pool.end();
 });
 
 describe('Auth Controller Tests', () => {
   describe('POST /api/login', () => {
     it('should login successfully with correct credentials', async () => {
       const mockUser = { id: 1, username: 'admin', password: 'hashedpassword' };
-      
-      jest.spyOn(pool, 'query').mockResolvedValue({ rows: [mockUser] });
+
+      mockQuery.mockResolvedValueOnce({ rows: [mockUser] });
       jest.spyOn(bcrypt, 'compare').mockResolvedValue(true);
 
       const response = await request(app)
@@ -25,7 +29,7 @@ describe('Auth Controller Tests', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.message).toBe('Login Berhasil!');
-      
+
       const cookies = response.headers['set-cookie'];
       expect(cookies).toBeDefined();
       expect(cookies[0]).toMatch(/token=.*\./); // JWT format matching
@@ -33,7 +37,7 @@ describe('Auth Controller Tests', () => {
     });
 
     it('should fail with wrong username', async () => {
-      jest.spyOn(pool, 'query').mockResolvedValue({ rows: [] }); // User not found
+      mockQuery.mockResolvedValueOnce({ rows: [] }); // User not found
 
       const response = await request(app)
         .post('/api/login')
@@ -45,7 +49,7 @@ describe('Auth Controller Tests', () => {
 
     it('should fail with wrong password', async () => {
       const mockUser = { id: 1, username: 'admin', password: 'hashedpassword' };
-      jest.spyOn(pool, 'query').mockResolvedValue({ rows: [mockUser] });
+      mockQuery.mockResolvedValueOnce({ rows: [mockUser] });
       jest.spyOn(bcrypt, 'compare').mockResolvedValue(false);
 
       const response = await request(app)
@@ -63,7 +67,7 @@ describe('Auth Controller Tests', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.message).toBe('Logout Berhasil!');
-      
+
       const cookies = response.headers['set-cookie'];
       expect(cookies).toBeDefined();
       expect(cookies[0]).toMatch(/token=;/); // Cleared cookie string

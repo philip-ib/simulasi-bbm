@@ -2,7 +2,6 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import "dotenv/config";
 import { getPool } from "../index.js";
-const pool = getPool();
 
 const SECRET_KEY = process.env.SECRET_KEY;
 
@@ -10,6 +9,7 @@ export const login = async (req, res) => {
   const { username, password } = req.body;
 
   try {
+    const pool = getPool();
     const result = await pool.query("SELECT * FROM users WHERE username = $1", [
       username,
     ]);

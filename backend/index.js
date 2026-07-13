@@ -12,11 +12,32 @@ export const app = express();
 const PORT = process.env.PORT || 5000;
 
 // ============================================================
-// CORS - Lebih longgar untuk Vercel (frontend & backend 1 domain)
+// CORS - Whitelist origin untuk keamanan
 // ============================================================
+function getAllowedOrigins() {
+  if (process.env.ALLOWED_ORIGIN) {
+    return process.env.ALLOWED_ORIGIN.split(",").map(o => o.trim());
+  }
+  return [
+    "http://localhost:5000",
+    "http://127.0.0.1:5000",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:5500",
+    "http://127.0.0.1:5500",
+  ];
+}
+const allowedOrigins = getAllowedOrigins();
 app.use(
   cors({
-    origin: true, // Izinkan semua origin (aman karena di Vercel 1 domain)
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.warn("CORS blocked origin:", origin);
+        callback(null, false);
+      }
+    },
     credentials: true,
   }),
 );
@@ -143,7 +164,7 @@ app.get("/api/health", (req, res) => {
 // ============================================================
 // JALANKAN SERVER (Hanya jika di lokal)
 // ============================================================
-if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
+if (process.env.NODE_ENV !== "production" && !process.env.VERCEL && process.env.NODE_ENV !== "test") {
   app.listen(PORT, () =>
     console.log(`Server Backend berjalan di http://localhost:${PORT}`),
   );
