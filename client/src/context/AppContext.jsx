@@ -26,11 +26,6 @@ export function AppProvider({ children }) {
     setToast(null);
   }, []);
 
-  // Verifikasi session saat mount
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
-
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
@@ -135,6 +130,11 @@ export function AppProvider({ children }) {
       return false;
     }
   }, []);
+
+  // Verifikasi session saat mount
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
   const apiCall = useCallback(async (method, path, body) => {
     const res = await fetch(`${API}${path}`, {
