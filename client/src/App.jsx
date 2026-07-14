@@ -6,11 +6,18 @@ import SimulasiPage from "./components/simulasi/SimulasiPage.jsx";
 import AdminPage from "./components/admin/AdminPage.jsx";
 
 export default function App() {
-  const { tab, loadData } = useApp();
+  const { tab, loadData, error, showToast } = useApp();
 
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // Tampilkan error global sebagai toast
+  useEffect(() => {
+    if (error) {
+      showToast(error, true);
+    }
+  }, [error, showToast]);
 
   return (
     <div id="app">

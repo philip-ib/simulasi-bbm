@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback } from "react";
+import { createContext, useContext, useState, useCallback, useEffect } from "react";
 
 const AppContext = createContext(null);
 
@@ -6,9 +6,7 @@ const API = "/api";
 
 export function AppProvider({ children }) {
   const [tab, setTab] = useState("simulasi");
-  const [isLoggedIn, setIsLoggedIn] = useState(
-    () => localStorage.getItem("isLoggedIn") === "true"
-  );
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [listMotor, setListMotor] = useState([]);
   const [listBbm, setListBbm] = useState([]);
   const [selectedMotor, setSelectedMotor] = useState(null);
@@ -20,36 +18,53 @@ export function AppProvider({ children }) {
   const [error, setError] = useState(null);
   const [toast, setToast] = useState(null);
 
-  const showToast = useCallback((message) => {
-    setToast({ message, key: Date.now() });
+  const showToast = useCallback((message, isError = false) => {
+    setToast({ message, isError, key: Date.now() });
   }, []);
 
   const clearToast = useCallback(() => {
     setToast(null);
   }, []);
 
+  // Verifikasi session saat mount
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
   const loadData = useCallback(async () => {
     try {
+      setLoading(true);
       const [motorRes, bbmRes] = await Promise.all([
         fetch(`${API}/motor`),
         fetch(`${API}/bbm`),
       ]);
-      const motor = await motorRes.json();
-      const bbm = await bbmRes.json();
-      setListMotor(motor);
-      setListBbm(bbm);
+
+      if (motorRes.ok) {
+        setListMotor(await motorRes.json());
+      } else {
+        console.error("Gagal memuat data motor.");
+      }
+
+      if (bbmRes.ok) {
+        setListBbm(await bbmRes.json());
+      } else {
+        console.error("Gagal memuat data BBM.");
+      }
     } catch {
       setError("Gagal memuat data.");
+    } finally {
+      setLoading(false);
     }
   }, []);
 
   const hitung = useCallback(async () => {
-    if (!inputUser || !selectedMotor || !selectedBbm) {
+    if (inputUser === "" || !selectedMotor || !selectedBbm) {
       setHasil(null);
       return;
     }
 
     try {
+      setLoading(true);
       const res = await fetch(`${API}/simulasi`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -61,9 +76,18 @@ export function AppProvider({ children }) {
         }),
       });
       const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Simulasi gagal diproses.");
+        setHasil(null);
+        return;
+      }
       setHasil(data);
+      setError(null);
     } catch {
       setHasil(null);
+      setError("Gagal terhubung ke server.");
+    } finally {
+      setLoading(false);
     }
   }, [inputUser, tipeInput, selectedMotor, selectedBbm]);
 
@@ -81,7 +105,6 @@ export function AppProvider({ children }) {
         return { success: false, error: data.error || "Login gagal." };
       }
       setIsLoggedIn(true);
-      localStorage.setItem("isLoggedIn", "true");
       return { success: true, username };
     } catch {
       return { success: false, error: "Gagal terhubung ke server." };
@@ -97,7 +120,6 @@ export function AppProvider({ children }) {
       // ignore
     }
     setIsLoggedIn(false);
-    localStorage.removeItem("isLoggedIn");
   }, []);
 
   const checkAuth = useCallback(async () => {
@@ -124,7 +146,6 @@ export function AppProvider({ children }) {
 
     if (res.status === 401 || res.status === 403) {
       setIsLoggedIn(false);
-      localStorage.removeItem("isLoggedIn");
       throw new Error("Sesi telah habis. Silakan login kembali.");
     }
 

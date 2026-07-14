@@ -1,16 +1,8 @@
 import { useApp } from "../../context/AppContext.jsx";
-
-function formatRupiah(n) {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(n);
-}
+import { formatRupiah } from "../../utils/format.js";
 
 export default function ResultDisplay() {
-  const { hasil } = useApp();
+  const { hasil, loading } = useApp();
 
   return (
     <div className="bg-white rounded-xl shadow-md border-t-4 border-red-600 p-6">
@@ -18,7 +10,17 @@ export default function ResultDisplay() {
         📊 Hasil Pengisian
       </h2>
 
-      {!hasil ? (
+      {loading ? (
+        <div className="space-y-3 animate-pulse">
+          <div className="bg-slate-100 rounded-lg p-3 h-16" />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-slate-100 rounded-lg p-3 h-16" />
+            <div className="bg-slate-100 rounded-lg p-3 h-16" />
+            <div className="bg-slate-100 rounded-lg p-3 h-16" />
+            <div className="bg-slate-100 rounded-lg p-3 h-16" />
+          </div>
+        </div>
+      ) : !hasil ? (
         <p className="text-sm text-slate-400 italic">
           Silakan pilih motor, BBM, dan masukkan nominal untuk melihat hasil.
         </p>

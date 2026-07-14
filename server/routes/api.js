@@ -23,6 +23,12 @@ const loginLimiter = rateLimit({
   message: { error: "Terlalu banyak percobaan login. Coba lagi 15 menit." },
 });
 
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: { error: "Terlalu banyak permintaan. Coba lagi nanti." },
+});
+
 // Auth routes
 router.post("/auth/login", loginLimiter, validateLogin, login);
 router.post("/auth/logout", logout);
@@ -36,13 +42,13 @@ router.get("/bbm", getBbm);
 router.post("/simulasi", validateSimulasi, hitungSimulasi);
 
 // Protected motor routes
-router.post("/motor", verifyToken, validateMotor, tambahMotor);
-router.put("/motor/:id", verifyToken, validateMotor, updateMotor);
-router.delete("/motor/:id", verifyToken, hapusMotor);
+router.post("/motor", verifyToken, apiLimiter, validateMotor, tambahMotor);
+router.put("/motor/:id", verifyToken, apiLimiter, validateMotor, updateMotor);
+router.delete("/motor/:id", verifyToken, apiLimiter, hapusMotor);
 
 // Protected BBM routes
-router.post("/bbm", verifyToken, validateBbm, tambahBbm);
-router.put("/bbm/:id", verifyToken, validateBbm, updateBbm);
-router.delete("/bbm/:id", verifyToken, hapusBbm);
+router.post("/bbm", verifyToken, apiLimiter, validateBbm, tambahBbm);
+router.put("/bbm/:id", verifyToken, apiLimiter, validateBbm, updateBbm);
+router.delete("/bbm/:id", verifyToken, apiLimiter, hapusBbm);
 
 export default router;

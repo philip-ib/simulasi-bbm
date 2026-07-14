@@ -51,12 +51,12 @@ export default async function initDb() {
 
     if (!process.env.ADMIN_PASSWORD) {
       const randomPass = randomBytes(8).toString("hex");
-      const hash = bcrypt.hashSync(randomPass, 10);
+      const hash = await bcrypt.hash(randomPass, 10);
       db.prepare("INSERT INTO users (username, password_hash) VALUES (?, ?)").run(username, hash);
       console.log(`[DB] Admin user "${username}" dibuat dengan password: ${randomPass}`);
       console.log(`[DB] ⚠️  Simpan password ini! Set ADMIN_PASSWORD di .env untuk menggantinya.`);
     } else {
-      const hash = bcrypt.hashSync(process.env.ADMIN_PASSWORD, 10);
+      const hash = await bcrypt.hash(process.env.ADMIN_PASSWORD, 10);
       db.prepare("INSERT INTO users (username, password_hash) VALUES (?, ?)").run(username, hash);
       console.log(`[DB] Admin user "${username}" dibuat (password dari .env).`);
     }

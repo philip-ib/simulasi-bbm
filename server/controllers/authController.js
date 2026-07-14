@@ -13,7 +13,7 @@ export async function login(req, res) {
       return res.status(400).json({ error: "Username atau Password salah!" });
     }
 
-    const match = bcrypt.compareSync(password, user.password_hash);
+    const match = await bcrypt.compare(password, user.password_hash);
     if (!match) {
       return res.status(400).json({ error: "Username atau Password salah!" });
     }
@@ -36,7 +36,12 @@ export async function login(req, res) {
 }
 
 export function logout(req, res) {
-  res.clearCookie("token");
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+  });
   res.json({ message: "Logout Berhasil!" });
 }
 

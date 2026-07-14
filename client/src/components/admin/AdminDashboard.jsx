@@ -1,14 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useApp } from "../../context/AppContext.jsx";
-
-function formatRupiah(n) {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(n);
-}
+import { formatRupiah } from "../../utils/format.js";
 
 export default function AdminDashboard() {
   const { listMotor, listBbm, loadData, apiCall, logout } = useApp();
@@ -25,11 +17,30 @@ export default function AdminDashboard() {
   const [hargaBbm, setHargaBbm] = useState("");
   const [editingBbm, setEditingBbm] = useState(null);
 
+  const timerRef = useRef(null);
+
   const showMsg = (msg, isError = false) => {
-    if (isError) setError(msg);
-    else setSuccess(msg);
-    setTimeout(() => { setError(null); setSuccess(null); }, 4000);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    if (isError) {
+      setError(msg);
+      setSuccess(null);
+    } else {
+      setSuccess(msg);
+      setError(null);
+    }
+    timerRef.current = setTimeout(() => {
+      setError(null);
+      setSuccess(null);
+      timerRef.current = null;
+    }, 4000);
   };
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
 
   // Motor CRUD
   const handleAddMotor = async (e) => {
@@ -57,14 +68,23 @@ export default function AdminDashboard() {
     setKapasitas(String(m.kapasitas));
   };
 
+  const [confirmDelete, setConfirmDelete] = useState(null); // { id, type, name }
+
   const handleDeleteMotor = async (id) => {
-    if (!confirm("Yakin hapus kendaraan ini?")) return;
+    const motor = listMotor.find((m) => m.id === id);
+    setConfirmDelete({ id, type: "motor", name: motor?.merek || `ID ${id}` });
+  };
+
+  const confirmDeleteAction = async () => {
+    if (!confirmDelete) return;
     try {
-      await apiCall("DELETE", `/motor/${id}`);
-      showMsg("Kendaraan berhasil dihapus.");
+      await apiCall("DELETE", `/${confirmDelete.type}/${confirmDelete.id}`);
+      showMsg(`${confirmDelete.type === "motor" ? "Kendaraan" : "BBM"} berhasil dihapus.`);
       loadData();
     } catch (err) {
       showMsg(err.message, true);
+    } finally {
+      setConfirmDelete(null);
     }
   };
 
@@ -95,14 +115,8 @@ export default function AdminDashboard() {
   };
 
   const handleDeleteBbm = async (id) => {
-    if (!confirm("Yakin hapus BBM ini?")) return;
-    try {
-      await apiCall("DELETE", `/bbm/${id}`);
-      showMsg("BBM berhasil dihapus.");
-      loadData();
-    } catch (err) {
-      showMsg(err.message, true);
-    }
+    const bbm = listBbm.find((b) => b.id === id);
+    setConfirmDelete({ id, type: "bbm", name: bbm?.nama_bbm || `ID ${id}` });
   };
 
   return (
@@ -129,6 +143,32 @@ export default function AdminDashboard() {
       {success && (
         <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm rounded-lg px-4 py-2">
           {success}
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {confirmDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-lg p-6 max-w-sm mx-4">
+            <h3 className="font-bold text-slate-800 mb-2">Konfirmasi Hapus</h3>
+            <p className="text-sm text-slate-600 mb-4">
+              Yakin hapus <strong>{confirmDelete.name}</strong>? Tindakan ini tidak dapat dibatalkan.
+            </p>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setConfirmDelete(null)}
+                className="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2 px-4 rounded-lg text-sm transition-colors"
+              >
+                Batal
+              </button>
+              <button
+                onClick={confirmDeleteAction}
+                className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg text-sm transition-colors"
+              >
+                Hapus
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -168,7 +208,7 @@ export default function AdminDashboard() {
           </form>
 
           {/* Tabel Motor */}
-          {listMotor.length > 0 && (
+          {listMotor.length > 0 ? (
             <div className="mt-4 overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -192,6 +232,10 @@ export default function AdminDashboard() {
                 </tbody>
               </table>
             </div>
+          ) : (
+            <p className="text-sm text-slate-400 italic mt-4 text-center py-4">
+              Belum ada kendaraan terdaftar.
+            </p>
           )}
         </div>
 
@@ -230,7 +274,7 @@ export default function AdminDashboard() {
           </form>
 
           {/* Tabel BBM */}
-          {listBbm.length > 0 && (
+          {listBbm.length > 0 ? (
             <div className="mt-4 overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -254,6 +298,10 @@ export default function AdminDashboard() {
                 </tbody>
               </table>
             </div>
+          ) : (
+            <p className="text-sm text-slate-400 italic mt-4 text-center py-4">
+              Belum ada BBM terdaftar.
+            </p>
           )}
         </div>
       </div>

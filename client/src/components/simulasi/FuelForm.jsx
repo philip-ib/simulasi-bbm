@@ -1,14 +1,6 @@
 import { useApp } from "../../context/AppContext.jsx";
-import { useEffect } from "react";
-
-function formatRupiah(n) {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(n);
-}
+import { useEffect, useRef } from "react";
+import { formatRupiah } from "../../utils/format.js";
 
 export default function FuelForm() {
   const {
@@ -20,9 +12,12 @@ export default function FuelForm() {
     hitung,
   } = useApp();
 
-  // Hitung ulang setiap ada perubahan
+  // Hitung ulang setiap ada perubahan (dengan debounce 400ms)
+  const debounceRef = useRef(null);
   useEffect(() => {
-    hitung();
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => hitung(), 400);
+    return () => clearTimeout(debounceRef.current);
   }, [selectedMotor, selectedBbm, tipeInput, inputUser, hitung]);
 
   const placeholder = tipeInput === "uang" ? "Masukkan nominal (Rp)" : "Masukkan volume (Liter)";
@@ -40,13 +35,16 @@ export default function FuelForm() {
             Merek Motor
           </label>
           <select
-            value={selectedMotor ? listMotor.indexOf(selectedMotor) : ""}
-            onChange={(e) => setSelectedMotor(listMotor[e.target.value] || null)}
+            value={selectedMotor ? selectedMotor.id : ""}
+            onChange={(e) => {
+              const motor = listMotor.find((m) => m.id === parseInt(e.target.value));
+              setSelectedMotor(motor || null);
+            }}
             className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
           >
             <option value="">-- Pilih Motor --</option>
-            {listMotor.map((m, i) => (
-              <option key={m.id} value={i}>
+            {listMotor.map((m) => (
+              <option key={m.id} value={m.id}>
                 {m.merek} ({m.kapasitas}L)
               </option>
             ))}
@@ -59,13 +57,16 @@ export default function FuelForm() {
             Jenis BBM
           </label>
           <select
-            value={selectedBbm ? listBbm.indexOf(selectedBbm) : ""}
-            onChange={(e) => setSelectedBbm(listBbm[e.target.value] || null)}
+            value={selectedBbm ? selectedBbm.id : ""}
+            onChange={(e) => {
+              const bbm = listBbm.find((b) => b.id === parseInt(e.target.value));
+              setSelectedBbm(bbm || null);
+            }}
             className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
           >
             <option value="">-- Pilih BBM --</option>
-            {listBbm.map((b, i) => (
-              <option key={b.id} value={i}>
+            {listBbm.map((b) => (
+              <option key={b.id} value={b.id}>
                 {b.nama_bbm} ({formatRupiah(b.harga)}/L)
               </option>
             ))}

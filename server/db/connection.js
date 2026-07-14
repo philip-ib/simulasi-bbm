@@ -27,8 +27,11 @@ function wrapDb(sqlDb) {
       return {
         run(...params) {
           stmt.bind(params);
-          stmt.step();
-          stmt.free();
+          try {
+            stmt.step();
+          } finally {
+            stmt.free();
+          }
           const changes = sqlDb.getRowsModified();
           // Dapatkan lastInsertRowid SEBELUM save() karena export() meresetnya
           const idResult = sqlDb.exec("SELECT last_insert_rowid() AS id");
@@ -38,22 +41,26 @@ function wrapDb(sqlDb) {
         },
         get(...params) {
           stmt.bind(params);
-          if (stmt.step()) {
-            const row = stmt.getAsObject();
+          try {
+            if (stmt.step()) {
+              return stmt.getAsObject();
+            }
+            return undefined;
+          } finally {
             stmt.free();
-            return row;
           }
-          stmt.free();
-          return undefined;
         },
         all(...params) {
           stmt.bind(params);
-          const rows = [];
-          while (stmt.step()) {
-            rows.push(stmt.getAsObject());
+          try {
+            const rows = [];
+            while (stmt.step()) {
+              rows.push(stmt.getAsObject());
+            }
+            return rows;
+          } finally {
+            stmt.free();
           }
-          stmt.free();
-          return rows;
         },
       };
     },
